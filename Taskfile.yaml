@@ -1,13 +1,16 @@
 version: 3
 tasks:
   start:
+    desc: "Start the URL Shortener service"
     cmds:
       - go run ./cmd/url-shortener/ --config ./config/local.yaml
 
   migrate:up:
+    desc: "Run database migrations up"
     cmds:
       - go run ./cmd/migrator/ --config ./config/local.yaml --direction up
 
   migrate:down:
+    desc: "Run database migrations down"
     cmds:
       - go run ./cmd/migrator/ --config ./config/local.yaml --direction down

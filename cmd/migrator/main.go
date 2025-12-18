@@ -24,9 +24,6 @@ func main() {
 	var direction string
 
 	flag.StringVar(&direction, "direction", directionUp, "Direction to migrate (up or down)")
-	flag.Parse()
-
-	// Load configuration
 	cfg := config.MustLoad()
 
 	// Setup logger

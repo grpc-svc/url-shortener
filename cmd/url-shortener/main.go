@@ -4,7 +4,12 @@ import (
 	"log/slog"
 	"os"
 	"url-shortener/internal/config"
+	mwLogger "url-shortener/internal/http-server/middleware/logger"
 	"url-shortener/internal/lib/logger/slogcute"
+	"url-shortener/internal/storage/sqlite"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -16,15 +21,24 @@ const (
 func main() {
 	cfg := config.MustLoad()
 
-	logger := SetupLogger(cfg.Env)
+	log := SetupLogger(cfg.Env)
 
-	logger.Info("Starting URL Shortener Service", slog.String("env", cfg.Env))
+	log.Info("Starting URL Shortener Service", slog.String("env", cfg.Env))
 
-	// TODO: init storage
+	storage, err := sqlite.New(cfg.Env)
 
-	// TODO: init router : chi
+	if err != nil {
+		log.Error("Failed to initialize storage", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
 
-	// TODO: start server
+	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
+	router.Use(mwLogger.New(log))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
+
 }
 
 func SetupLogger(env string) *slog.Logger {
