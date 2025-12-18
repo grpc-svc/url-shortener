@@ -1,6 +1,9 @@
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
+
+# ========================================
+# Go Build Artifacts
+# ========================================
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -11,22 +14,156 @@
 # Test binary, built with `go test -c`
 *.test
 
-# Code coverage profiles and other test artifacts
+# Output of the go coverage tool
 *.out
 coverage.*
 *.coverprofile
 profile.cov
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
+htmlcov/
 
 # Go workspace file
 go.work
 go.work.sum
 
-# env file
-.env
+# Dependency directories
+vendor/
 
-# Editor/IDE
-# .idea/
-# .vscode/
+# ========================================
+# Application Specific
+# ========================================
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+storage/
+
+# Local configuration (keep templates/examples)
+config/local.yaml
+config/dev.yaml
+config/prod.yaml
+!config/local.yaml.example
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# ========================================
+# Environment & Secrets
+# ========================================
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.crt
+secrets/
+
+# ========================================
+# OS Specific
+# ========================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.fuse_hidden*
+.nfs*
+
+# ========================================
+# IDE & Editors
+# ========================================
+# JetBrains IDEs (GoLand, IntelliJ IDEA)
+.idea/
+.idea
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+.netrwhist
+
+# Emacs
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ========================================
+# Build & CI/CD
+# ========================================
+# Build output directories
+bin/
+build/
+dist/
+out/
+
+# Air (live reload tool)
+.air/
+.air.toml
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Task runner
+.task/
+
+# ========================================
+# Testing & Profiling
+# ========================================
+# Benchmarks
+*.bench
+benchmarks/
+
+# CPU & Memory profiles
+*.prof
+*.pprof
+cpu.out
+mem.out
+profile.out
+
+# Race detector
+race.out
+
+# ========================================
+# Documentation
+# ========================================
+# Generated docs (keep source docs)
+docs/build/
+site/
+
+# ========================================
+# Misc
+# ========================================
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Debug files
+debug
+__debug_bin

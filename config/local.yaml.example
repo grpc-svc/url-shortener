@@ -1,0 +1,10 @@
+env: "local" # local, dev, prod
+storage_path: "./storage/storage.db"
+http_server:
+  address: "localhost:8081"
+  timeout: 5s
+  idle_timeout: 60s
+migrations:
+  migrations_path: "./migrations"
+  migration_table: "migrations"
+
