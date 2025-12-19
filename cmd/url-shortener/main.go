@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/url/save"
 	mwLogger "url-shortener/internal/http-server/middleware/logger"
@@ -26,8 +30,7 @@ func main() {
 
 	log.Info("Starting URL Shortener Service", slog.String("env", cfg.Env))
 
-	storage, err := sqlite.New(cfg.Env)
-
+	storage, err := sqlite.New(cfg.StoragePath)
 	if err != nil {
 		log.Error("Failed to initialize storage", slog.String("error", err.Error()))
 		os.Exit(1)
@@ -44,6 +47,61 @@ func main() {
 
 	log.Info("starting HTTP server", slog.String("addr", cfg.HTTPServer.Address))
 
+	srv := &http.Server{
+		Addr:         cfg.HTTPServer.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	// Channel to listen for errors coming from the listener.
+	serverErrors := make(chan error, 1)
+
+	// Start the server in a goroutine
+	go func() {
+		log.Info("HTTP server is listening", slog.String("addr", cfg.HTTPServer.Address))
+		serverErrors <- srv.ListenAndServe()
+	}()
+
+	// Channel to listen for interrupt or terminate signal from the OS
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	// Blocking select
+	select {
+	case err := <-serverErrors:
+		log.Error("HTTP server start failed", slog.String("error", err.Error()))
+		os.Exit(1)
+
+	case sig := <-shutdown:
+		log.Info("shutdown signal received", slog.String("signal", sig.String()))
+
+		// Create context with timeout for shutdown
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.HTTPServer.ShutdownTimeout)
+		defer cancel()
+
+		// Gracefully shutdown the server
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Error("graceful shutdown failed", slog.String("error", err.Error()))
+			// Force close if graceful shutdown fails
+			if err := srv.Close(); err != nil {
+				log.Error("force close failed", slog.String("error", err.Error()))
+			}
+			os.Exit(1)
+		}
+
+		log.Info("HTTP server stopped gracefully")
+	}
+
+	// Close storage connection
+	if err := storage.Close(); err != nil {
+		log.Error("failed to close storage", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
+	log.Info("storage closed successfully")
+	log.Info("application shutdown complete")
 }
 
 func SetupLogger(env string) *slog.Logger {

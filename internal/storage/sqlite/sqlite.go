@@ -35,7 +35,7 @@ func (s *Storage) Close() error {
 func (s *Storage) SaveURL(ctx context.Context, alias, originalURL string) error {
 	const op = "storage.sqlite.SaveURL"
 
-	stmt, err := s.db.PrepareContext(ctx, "INSERT INTO urls(alias, original_url) VALUES(?, ?)")
+	stmt, err := s.db.PrepareContext(ctx, "INSERT INTO urls(alias, url) VALUES(?, ?)")
 	if err != nil {
 		return fmt.Errorf("%s : %w", op, err)
 	}
@@ -56,7 +56,7 @@ func (s *Storage) SaveURL(ctx context.Context, alias, originalURL string) error 
 func (s *Storage) GetOriginalURL(ctx context.Context, alias string) (string, error) {
 	const op = "storage.sqlite.GetOriginalURL"
 
-	stmt, err := s.db.PrepareContext(ctx, "SELECT original_url FROM urls WHERE alias = ?")
+	stmt, err := s.db.PrepareContext(ctx, "SELECT url FROM urls WHERE alias = ?")
 	if err != nil {
 		return "", fmt.Errorf("%s : %w", op, err)
 	}

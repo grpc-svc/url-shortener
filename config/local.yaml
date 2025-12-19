@@ -4,6 +4,7 @@ http_server:
   address: "localhost:8081"
   timeout: 5s
   idle_timeout: 60s
+  shutdown_timeout: 10s
 migrations:
   migrations_path: "./migrations"
   migration_table: "migrations"

@@ -3,21 +3,23 @@ package config
 import (
 	"flag"
 	"os"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env         string `yaml:"env"`
-	StoragePath string `yaml:"storage_path" env-required:"true"`
-	HTTPServer  HTTPServerConfig
-	Migrations  MigrationsConfig
+	Env         string           `yaml:"env"`
+	StoragePath string           `yaml:"storage_path" env-required:"true"`
+	HTTPServer  HTTPServerConfig `yaml:"http_server"`
+	Migrations  MigrationsConfig `yaml:"migrations"`
 }
 
 type HTTPServerConfig struct {
-	Address     string `yaml:"address" env-default:":8080"`
-	Timeout     int    `yaml:"timeout" env-default:"5"`
-	IdleTimeout int    `yaml:"idle_timeout" env-default:"60"`
+	Address         string        `yaml:"address" env-default:"localhost:8080"`
+	Timeout         time.Duration `yaml:"timeout" env-default:"5s"`
+	IdleTimeout     time.Duration `yaml:"idle_timeout" env-default:"60s"`
+	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env-default:"10s"`
 }
 
 type MigrationsConfig struct {
