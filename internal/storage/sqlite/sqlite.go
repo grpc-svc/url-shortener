@@ -47,14 +47,15 @@ func (s *Storage) SaveURL(ctx context.Context, alias, originalURL string) error 
 		if errors.As(err, &sqliteErr) && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
 			return fmt.Errorf("%s: %w", op, storage.ErrURLExists)
 		}
+		return fmt.Errorf("%s : %w", op, err)
 	}
 
 	return nil
 }
 
-// GetOriginalURL retrieves the original URL for the given alias.
-func (s *Storage) GetOriginalURL(ctx context.Context, alias string) (string, error) {
-	const op = "storage.sqlite.GetOriginalURL"
+// GetURL retrieves the original URL for the given alias.
+func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
+	const op = "storage.sqlite.GetURL"
 
 	stmt, err := s.db.PrepareContext(ctx, "SELECT url FROM urls WHERE alias = ?")
 	if err != nil {

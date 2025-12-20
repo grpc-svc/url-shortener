@@ -56,7 +56,7 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 
 		log.Info("request decoded", slog.Any("req", req))
 
-		if err := validate.Struct(req); err != nil {
+		if err = validate.Struct(req); err != nil {
 			validationErrs, ok := err.(validator.ValidationErrors)
 			if !ok {
 				log.Error("failed to validate request", slog.String("error", err.Error()))
