@@ -28,6 +28,7 @@ const AliasLength = 6
 
 var validate = validator.New()
 
+//go:generate go run github.com/vektra/mockery/v3
 type URLSaver interface {
 	SaveURL(ctx context.Context, alias, originalURL string) error
 }
