@@ -7,11 +7,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	ssogrpc "url-shortener/internal/client/grpc"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/redirect"
 	"url-shortener/internal/http-server/handlers/url/save"
+	mwAuth "url-shortener/internal/http-server/middleware/auth"
 	mwLogger "url-shortener/internal/http-server/middleware/logger"
+	"url-shortener/internal/lib/jwt"
 	"url-shortener/internal/lib/logger/slogcute"
+	"url-shortener/internal/storage"
 	"url-shortener/internal/storage/sqlite"
 
 	"github.com/go-chi/chi/v5"
@@ -31,7 +35,25 @@ func main() {
 
 	log.Info("Starting URL Shortener Service", slog.String("env", cfg.Env))
 
-	storage, err := sqlite.New(cfg.StoragePath)
+	// Initialize SSO gRPC client
+	ssoClient, err := ssogrpc.New(
+		context.Background(),
+		log,
+		cfg.Clients.SSO.Address,
+		cfg.Clients.SSO.Timeout,
+		cfg.Clients.SSO.Retries,
+	)
+	if err != nil {
+		log.Error("Failed to create SSO gRPC client", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
+	// TODO: Use the SSO gRPC client where needed
+	_ = ssoClient // Mark as intentionally unused until implementation
+
+	// Initialize storage
+	var storageInstance storage.Storage
+	storageInstance, err = sqlite.New(cfg.StoragePath)
 	if err != nil {
 		log.Error("Failed to initialize storage", slog.String("error", err.Error()))
 		os.Exit(1)
@@ -44,8 +66,22 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(log, storage))
-	router.Get("/{alias}", redirect.New(log, storage))
+	jwtValidator, err := jwt.New(cfg.AppSecret)
+	if err != nil {
+		log.Error("failed to init jwt validator", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
+	// Protected routes (require JWT)
+	router.Group(func(r chi.Router) {
+		r.Use(mwAuth.New(log, jwtValidator))
+
+		r.Post("/url", save.New(log, storageInstance))
+		// TODO: r.Delete("/url", save.New(log, storageInstance))
+	})
+
+	// Public routes
+	router.Get("/{alias}", redirect.New(log, storageInstance))
 
 	log.Info("starting HTTP server", slog.String("addr", cfg.HTTPServer.Address))
 
@@ -97,7 +133,7 @@ func main() {
 	}
 
 	// Close storage connection
-	if err := storage.Close(); err != nil {
+	if err := storageInstance.Close(); err != nil {
 		log.Error("failed to close storage", slog.String("error", err.Error()))
 		os.Exit(1)
 	}

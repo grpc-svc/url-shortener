@@ -1,4 +1,4 @@
-env: "local" # local, dev, prod
+env: "local" # dev, prod
 storage_path: "./storage/storage.db"
 http_server:
   address: "localhost:8081"
@@ -8,4 +8,19 @@ http_server:
 migrations:
   migrations_path: "./migrations"
   migration_table: "migrations"
-
+clients:
+  sso:
+    addr: "localhost:44044"
+    timeout: 5s
+    retries: 3
+    insecure: true
+app_secret: |
+  -----BEGIN PUBLIC KEY-----
+  MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv3Y0yda0xzZr9UGT2Dt+
+  pcQ5nL3AqBL7fqrNPnORq0Roeu3Hxyh+CIcxDz6a5mogIG5hiXGEaTjIp7WfLv4v
+  882rFeVs/kOR5ENmjqmw6jVEu1XRUcmbrJNsZXwPLw3Q3P4+VZQAJL40Gxxe1aVR
+  DX+4AovF/F9mtYcvxv31lVhPH2axQNKiWBUe7GfLc8jYQ8kYegIiFgVzmp9CNRIc
+  NJjJPfgu5hKY2bew3XY0RuvNKWnvhIvEnwXDgo1Sb+RG0vIUkTUiEEv+GJK8CEQh
+  u+056gf15pr0s9IDCQyjdyM7OukBlXz8fZsV/wClsTxGyCw+uEQiOWU4auZgOOTR
+  5wIDAQAB
+  -----END PUBLIC KEY-----

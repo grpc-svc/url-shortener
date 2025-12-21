@@ -76,3 +76,30 @@ func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
 
 	return originalURL, nil
 }
+
+// DeleteURL removes the URL with the given alias from storage.
+func (s *Storage) DeleteURL(ctx context.Context, alias string) error {
+	const op = "storage.sqlite.DeleteURL"
+
+	stmt, err := s.db.PrepareContext(ctx, "DELETE FROM urls WHERE alias = ?")
+	if err != nil {
+		return fmt.Errorf("%s : %w", op, err)
+	}
+	defer func() { _ = stmt.Close() }()
+
+	result, err := stmt.ExecContext(ctx, alias)
+	if err != nil {
+		return fmt.Errorf("%s : %w", op, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s : %w", op, err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
+	}
+
+	return nil
+}

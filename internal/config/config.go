@@ -13,6 +13,8 @@ type Config struct {
 	StoragePath string           `yaml:"storage_path" env-required:"true"`
 	HTTPServer  HTTPServerConfig `yaml:"http_server"`
 	Migrations  MigrationsConfig `yaml:"migrations"`
+	Clients     ClientsConfig    `yaml:"clients"`
+	AppSecret   string           `yaml:"app_secret" env-required:"true"`
 }
 
 type HTTPServerConfig struct {
@@ -20,6 +22,17 @@ type HTTPServerConfig struct {
 	Timeout         time.Duration `yaml:"timeout" env-default:"5s"`
 	IdleTimeout     time.Duration `yaml:"idle_timeout" env-default:"60s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env-default:"10s"`
+}
+
+type Client struct {
+	Address  string        `yaml:"addr" env-required:"true"`
+	Timeout  time.Duration `yaml:"timeout" env-default:"5s"`
+	Retries  int           `yaml:"retries" env-default:"3"`
+	Insecure bool          `yaml:"insecure" env-default:"true"`
+}
+
+type ClientsConfig struct {
+	SSO Client `yaml:"sso"`
 }
 
 type MigrationsConfig struct {
