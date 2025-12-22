@@ -67,7 +67,7 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 		// Only allow http and https schemes to prevent malicious redirects
 		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 			log.Warn("blocked redirect to non-http(s) URL", slog.String("url", originalURL), slog.String("scheme", parsedURL.Scheme))
-			err = resp.RenderJSON(w, http.StatusBadRequest, resp.Error("invalid redirect URL scheme"))
+			err = resp.RenderJSON(w, http.StatusBadRequest, resp.Error("invalid redirect URL"))
 			if err != nil {
 				log.Error("failed to render JSON response", slog.String("error", err.Error()))
 			}

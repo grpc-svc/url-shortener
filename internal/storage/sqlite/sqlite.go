@@ -38,6 +38,7 @@ func New(storagePath string) (*Storage, error) {
 
 	// Verify connection is working
 	if err := db.Ping(); err != nil {
+		db.Close() // Close the connection on failure to prevent resource leak
 		return nil, fmt.Errorf("%s: failed to ping database: %w", op, err)
 	}
 

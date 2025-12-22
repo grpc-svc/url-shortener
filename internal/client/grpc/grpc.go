@@ -48,7 +48,8 @@ func New(
 		log.Warn("Using insecure gRPC connection - not recommended for production")
 		transportCreds = grpcinsecure.NewCredentials()
 	} else {
-		// Use TLS with system cert pool
+		// Use TLS with system cert pool and minimum TLS 1.2
+		// gRPC automatically extracts ServerName from the address for certificate validation
 		transportCreds = credentials.NewTLS(&tls.Config{
 			MinVersion: tls.VersionTLS12,
 		})

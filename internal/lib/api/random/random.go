@@ -16,7 +16,7 @@ func NewRandomString(size int) string {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
 		if err != nil {
 			// In case of error, panic as we cannot safely continue without cryptographic randomness
-			panic("failed to generate random number: " + err.Error())
+			panic("failed to generate cryptographically secure random number for alias generation: " + err.Error())
 		}
 		b[i] = chars[num.Int64()]
 	}
