@@ -70,3 +70,17 @@ func New(log *slog.Logger, validator *jwt.Validator) func(next http.Handler) htt
 		return http.HandlerFunc(fn)
 	}
 }
+
+// GetEmail retrieves the authenticated user's email from the request context.
+// Returns the email and true if found, or empty string and false otherwise.
+func GetEmail(ctx context.Context) (string, bool) {
+	email, ok := ctx.Value(ContextKeyEmail).(string)
+	return email, ok
+}
+
+// GetUID retrieves the authenticated user's ID from the request context.
+// Returns the UID and true if found, or 0 and false otherwise.
+func GetUID(ctx context.Context) (int64, bool) {
+	uid, ok := ctx.Value(ContextKeyUID).(int64)
+	return uid, ok
+}

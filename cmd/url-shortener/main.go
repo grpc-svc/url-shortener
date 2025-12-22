@@ -10,6 +10,7 @@ import (
 	ssogrpc "url-shortener/internal/client/grpc"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/redirect"
+	"url-shortener/internal/http-server/handlers/url/delete"
 	"url-shortener/internal/http-server/handlers/url/save"
 	mwAuth "url-shortener/internal/http-server/middleware/auth"
 	mwLogger "url-shortener/internal/http-server/middleware/logger"
@@ -48,9 +49,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: Use the SSO gRPC client where needed
-	_ = ssoClient // Mark as intentionally unused until implementation
-
 	// Initialize storage
 	var storageInstance storage.Storage
 	storageInstance, err = sqlite.New(cfg.StoragePath)
@@ -77,7 +75,7 @@ func main() {
 		r.Use(mwAuth.New(log, jwtValidator))
 
 		r.Post("/url", save.New(log, storageInstance))
-		// TODO: r.Delete("/url", save.New(log, storageInstance))
+		r.Delete("/{alias}", delete.New(log, storageInstance, ssoClient))
 	})
 
 	// Public routes

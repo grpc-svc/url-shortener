@@ -19,3 +19,9 @@ packages:
       dir: ./internal/http-server/handlers/url/save/mocks
       pkgname: mocks
       filename: save.go
+  url-shortener/internal/http-server/handlers/url/delete:
+    config:
+      all: true
+      dir: ./internal/http-server/handlers/url/delete/mocks
+      pkgname: mocks
+      filename: delete.go

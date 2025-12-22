@@ -48,8 +48,7 @@ func New(
 		),
 	)
 	if err != nil {
-		log.Error("failed to create gRPC client", slog.String("error", err.Error()))
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &Client{

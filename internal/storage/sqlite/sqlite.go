@@ -20,7 +20,7 @@ func New(storagePath string) (*Storage, error) {
 
 	db, err := sql.Open("sqlite3", storagePath)
 	if err != nil {
-		return nil, fmt.Errorf("%s : %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return &Storage{db: db}, nil
@@ -32,22 +32,22 @@ func (s *Storage) Close() error {
 }
 
 // SaveURL saves the original URL with the given alias.
-func (s *Storage) SaveURL(ctx context.Context, alias, originalURL string) error {
+func (s *Storage) SaveURL(ctx context.Context, alias, originalURL, ownerEmail string) error {
 	const op = "storage.sqlite.SaveURL"
 
-	stmt, err := s.db.PrepareContext(ctx, "INSERT INTO urls(alias, url) VALUES(?, ?)")
+	stmt, err := s.db.PrepareContext(ctx, "INSERT INTO urls(alias, url, owner_email) VALUES(?, ?, ?)")
 	if err != nil {
-		return fmt.Errorf("%s : %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer func() { _ = stmt.Close() }()
 
-	_, err = stmt.ExecContext(ctx, alias, originalURL)
+	_, err = stmt.ExecContext(ctx, alias, originalURL, ownerEmail)
 	if err != nil {
 		var sqliteErr sqlite3.Error
 		if errors.As(err, &sqliteErr) && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
 			return fmt.Errorf("%s: %w", op, storage.ErrURLExists)
 		}
-		return fmt.Errorf("%s : %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
 
 	stmt, err := s.db.PrepareContext(ctx, "SELECT url FROM urls WHERE alias = ?")
 	if err != nil {
-		return "", fmt.Errorf("%s : %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 	defer func() { _ = stmt.Close() }()
 
@@ -71,10 +71,34 @@ func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
 		}
-		return "", fmt.Errorf("%s : %w", op, err)
+		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	return originalURL, nil
+}
+
+// GetURLOwner retrieves the owner email for the given alias.
+func (s *Storage) GetURLOwner(ctx context.Context, alias string) (string, error) {
+	const op = "storage.sqlite.GetURLOwner"
+
+	stmt, err := s.db.PrepareContext(ctx, "SELECT owner_email FROM urls WHERE alias = ?")
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+	defer func() { _ = stmt.Close() }()
+
+	row := stmt.QueryRowContext(ctx, alias)
+
+	var ownerEmail string
+	err = row.Scan(&ownerEmail)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
+		}
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return ownerEmail, nil
 }
 
 // DeleteURL removes the URL with the given alias from storage.
@@ -83,18 +107,18 @@ func (s *Storage) DeleteURL(ctx context.Context, alias string) error {
 
 	stmt, err := s.db.PrepareContext(ctx, "DELETE FROM urls WHERE alias = ?")
 	if err != nil {
-		return fmt.Errorf("%s : %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer func() { _ = stmt.Close() }()
 
 	result, err := stmt.ExecContext(ctx, alias)
 	if err != nil {
-		return fmt.Errorf("%s : %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("%s : %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	if rowsAffected == 0 {

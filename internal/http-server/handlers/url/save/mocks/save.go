@@ -38,16 +38,16 @@ func (_m *MockURLSaver) EXPECT() *MockURLSaver_Expecter {
 }
 
 // SaveURL provides a mock function for the type MockURLSaver
-func (_mock *MockURLSaver) SaveURL(ctx context.Context, alias string, originalURL string) error {
-	ret := _mock.Called(ctx, alias, originalURL)
+func (_mock *MockURLSaver) SaveURL(ctx context.Context, alias string, originalURL string, ownerEmail string) error {
+	ret := _mock.Called(ctx, alias, originalURL, ownerEmail)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveURL")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, alias, originalURL)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
+		r0 = returnFunc(ctx, alias, originalURL, ownerEmail)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,11 +63,12 @@ type MockURLSaver_SaveURL_Call struct {
 //   - ctx context.Context
 //   - alias string
 //   - originalURL string
-func (_e *MockURLSaver_Expecter) SaveURL(ctx interface{}, alias interface{}, originalURL interface{}) *MockURLSaver_SaveURL_Call {
-	return &MockURLSaver_SaveURL_Call{Call: _e.mock.On("SaveURL", ctx, alias, originalURL)}
+//   - ownerEmail string
+func (_e *MockURLSaver_Expecter) SaveURL(ctx interface{}, alias interface{}, originalURL interface{}, ownerEmail interface{}) *MockURLSaver_SaveURL_Call {
+	return &MockURLSaver_SaveURL_Call{Call: _e.mock.On("SaveURL", ctx, alias, originalURL, ownerEmail)}
 }
 
-func (_c *MockURLSaver_SaveURL_Call) Run(run func(ctx context.Context, alias string, originalURL string)) *MockURLSaver_SaveURL_Call {
+func (_c *MockURLSaver_SaveURL_Call) Run(run func(ctx context.Context, alias string, originalURL string, ownerEmail string)) *MockURLSaver_SaveURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -81,10 +82,15 @@ func (_c *MockURLSaver_SaveURL_Call) Run(run func(ctx context.Context, alias str
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -95,7 +101,7 @@ func (_c *MockURLSaver_SaveURL_Call) Return(err error) *MockURLSaver_SaveURL_Cal
 	return _c
 }
 
-func (_c *MockURLSaver_SaveURL_Call) RunAndReturn(run func(ctx context.Context, alias string, originalURL string) error) *MockURLSaver_SaveURL_Call {
+func (_c *MockURLSaver_SaveURL_Call) RunAndReturn(run func(ctx context.Context, alias string, originalURL string, ownerEmail string) error) *MockURLSaver_SaveURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

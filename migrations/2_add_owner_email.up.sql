@@ -1,0 +1,2 @@
+ALTER TABLE urls ADD COLUMN owner_email TEXT NOT NULL DEFAULT '';
+

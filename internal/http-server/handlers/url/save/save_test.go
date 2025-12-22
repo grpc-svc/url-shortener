@@ -2,6 +2,7 @@ package save_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 
 	"url-shortener/internal/http-server/handlers/url/save"
 	"url-shortener/internal/http-server/handlers/url/save/mocks"
+	"url-shortener/internal/http-server/middleware/auth"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,6 +25,7 @@ func TestSaveHandler(t *testing.T) {
 		name       string
 		alias      string
 		url        string
+		ownerEmail string
 		respError  string
 		mockError  error
 		statusCode int
@@ -31,18 +34,21 @@ func TestSaveHandler(t *testing.T) {
 			name:       "Success",
 			alias:      "test_alias",
 			url:        "https://google.com",
+			ownerEmail: "test@example.com",
 			statusCode: http.StatusOK,
 		},
 		{
 			name:       "Empty alias",
 			alias:      "",
 			url:        "https://google.com",
+			ownerEmail: "test@example.com",
 			statusCode: http.StatusOK,
 		},
 		{
 			name:       "Empty URL",
 			url:        "",
 			alias:      "some_alias",
+			ownerEmail: "test@example.com",
 			respError:  "field OriginalURL is a required field",
 			statusCode: http.StatusBadRequest,
 		},
@@ -50,6 +56,7 @@ func TestSaveHandler(t *testing.T) {
 			name:       "Invalid URL",
 			url:        "some invalid URL",
 			alias:      "some_alias",
+			ownerEmail: "test@example.com",
 			respError:  "field OriginalURL is not a valid URL",
 			statusCode: http.StatusBadRequest,
 		},
@@ -57,8 +64,17 @@ func TestSaveHandler(t *testing.T) {
 			name:       "SaveURL Error",
 			alias:      "test_alias",
 			url:        "https://google.com",
+			ownerEmail: "test@example.com",
 			respError:  "failed to save url",
 			mockError:  errors.New("unexpected error"),
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			name:       "Missing owner email in context",
+			alias:      "test_alias",
+			url:        "https://google.com",
+			ownerEmail: "", // Empty email means we won't add it to context
+			respError:  "failed to get owner email",
 			statusCode: http.StatusInternalServerError,
 		},
 	}
@@ -70,7 +86,7 @@ func TestSaveHandler(t *testing.T) {
 			urlSaverMock := mocks.NewMockURLSaver(t)
 
 			if tc.respError == "" || tc.mockError != nil {
-				urlSaverMock.On("SaveURL", mock.Anything, mock.AnythingOfType("string"), tc.url).
+				urlSaverMock.On("SaveURL", mock.Anything, mock.AnythingOfType("string"), tc.url, tc.ownerEmail).
 					Return(tc.mockError).
 					Once()
 			}
@@ -81,6 +97,12 @@ func TestSaveHandler(t *testing.T) {
 
 			req, err := http.NewRequest(http.MethodPost, "/save", bytes.NewReader([]byte(input)))
 			require.NoError(t, err)
+
+			// Add authenticated user email to context (only if provided)
+			if tc.ownerEmail != "" {
+				ctx := context.WithValue(req.Context(), auth.ContextKeyEmail, tc.ownerEmail)
+				req = req.WithContext(ctx)
+			}
 
 			rr := httptest.NewRecorder()
 			handler.ServeHTTP(rr, req)

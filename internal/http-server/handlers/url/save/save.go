@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"url-shortener/internal/http-server/middleware/auth"
 	"url-shortener/internal/lib/api/random"
 	resp "url-shortener/internal/lib/api/response"
 	"url-shortener/internal/storage"
@@ -30,7 +31,7 @@ var validate = validator.New()
 
 //go:generate go run github.com/vektra/mockery/v3
 type URLSaver interface {
-	SaveURL(ctx context.Context, alias, originalURL string) error
+	SaveURL(ctx context.Context, alias, originalURL, ownerEmail string) error
 }
 
 func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
@@ -80,7 +81,19 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		if alias == "" {
 			alias = random.NewRandomString(AliasLength)
 		}
-		err = urlSaver.SaveURL(r.Context(), alias, req.OriginalURL)
+
+		ownerEmail, ok := auth.GetEmail(r.Context())
+		if !ok {
+			log.Error("failed to get owner email from context")
+
+			err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("failed to get owner email"))
+			if err != nil {
+				log.Error("failed to render JSON response", slog.String("error", err.Error()))
+			}
+			return
+		}
+
+		err = urlSaver.SaveURL(r.Context(), alias, req.OriginalURL, ownerEmail)
 		if errors.Is(err, storage.ErrURLExists) {
 			log.Info("alias already exists", slog.String("url", req.OriginalURL))
 
