@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	resp "url-shortener/internal/lib/api/response"
 	"url-shortener/internal/storage"
 
@@ -46,6 +47,27 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 		if err != nil {
 			log.Error("failed to get original URL", slog.String("error", err.Error()))
 			err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("internal error"))
+			if err != nil {
+				log.Error("failed to render JSON response", slog.String("error", err.Error()))
+			}
+			return
+		}
+
+		// Validate URL to prevent open redirect vulnerability
+		parsedURL, err := url.Parse(originalURL)
+		if err != nil {
+			log.Error("invalid URL format", slog.String("url", originalURL), slog.String("error", err.Error()))
+			err = resp.RenderJSON(w, http.StatusBadRequest, resp.Error("invalid redirect URL"))
+			if err != nil {
+				log.Error("failed to render JSON response", slog.String("error", err.Error()))
+			}
+			return
+		}
+
+		// Only allow http and https schemes to prevent malicious redirects
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			log.Warn("blocked redirect to non-http(s) URL", slog.String("url", originalURL), slog.String("scheme", parsedURL.Scheme))
+			err = resp.RenderJSON(w, http.StatusBadRequest, resp.Error("invalid redirect URL scheme"))
 			if err != nil {
 				log.Error("failed to render JSON response", slog.String("error", err.Error()))
 			}

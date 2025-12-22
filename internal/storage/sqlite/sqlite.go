@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 	"url-shortener/internal/storage"
 
 	"github.com/mattn/go-sqlite3"
@@ -18,9 +19,26 @@ type Storage struct {
 func New(storagePath string) (*Storage, error) {
 	const op = "storage.sqlite.New"
 
-	db, err := sql.Open("sqlite3", storagePath)
+	// Add SQLite pragmas for better performance and reliability
+	// _journal_mode=WAL: Write-Ahead Logging for better concurrency
+	// _busy_timeout=5000: Wait up to 5 seconds if database is locked
+	// _synchronous=NORMAL: Balance between safety and performance
+	// _foreign_keys=ON: Enable foreign key constraints
+	dsn := storagePath + "?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL&_foreign_keys=ON"
+
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	// Configure connection pool to prevent resource exhaustion
+	db.SetMaxOpenConns(25)                  // Maximum number of open connections
+	db.SetMaxIdleConns(5)                   // Maximum number of idle connections
+	db.SetConnMaxLifetime(5 * time.Minute) // Maximum connection lifetime
+
+	// Verify connection is working
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("%s: failed to ping database: %w", op, err)
 	}
 
 	return &Storage{db: db}, nil

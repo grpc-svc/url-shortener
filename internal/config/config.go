@@ -28,7 +28,7 @@ type Client struct {
 	Address  string        `yaml:"addr" env-required:"true"`
 	Timeout  time.Duration `yaml:"timeout" env-default:"5s"`
 	Retries  int           `yaml:"retries" env-default:"3"`
-	Insecure bool          `yaml:"insecure" env-default:"true"`
+	Insecure bool          `yaml:"insecure" env-default:"false"`
 }
 
 type ClientsConfig struct {

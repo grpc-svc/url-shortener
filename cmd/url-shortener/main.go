@@ -43,6 +43,7 @@ func main() {
 		cfg.Clients.SSO.Address,
 		cfg.Clients.SSO.Timeout,
 		cfg.Clients.SSO.Retries,
+		cfg.Clients.SSO.Insecure,
 	)
 	if err != nil {
 		log.Error("Failed to create SSO gRPC client", slog.String("error", err.Error()))
