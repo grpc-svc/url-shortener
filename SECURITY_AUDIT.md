@@ -309,3 +309,104 @@ After fixing the high-priority issues, this service will have a strong security 
 
 **Report Generated:** 2025-12-22  
 **Audit Complete**
+**Status:** ✅ All critical vulnerabilities fixed
+
+---
+
+## Post-Audit Update
+
+**Date:** 2025-12-22  
+**All high-priority security vulnerabilities have been fixed:**
+
+1. ✅ **Fixed Open Redirect Vulnerability** - Added URL scheme validation in redirect handler
+2. ✅ **Fixed Weak Random Generation** - Replaced math/rand with crypto/rand
+3. ✅ **Fixed Insecure gRPC** - Added TLS support with configurable secure/insecure mode
+4. ✅ **Improved Database Configuration** - Added connection pooling and SQLite pragmas
+
+**CodeQL Analysis:** ✅ 0 security alerts found
+
+### Implementation Details
+
+#### 1. Open Redirect Fix
+**File:** `internal/http-server/handlers/redirect/redirect.go`
+
+Added URL parsing and scheme validation before redirecting:
+```go
+// Validate URL to prevent open redirect vulnerability
+parsedURL, err := url.Parse(originalURL)
+if err != nil {
+    // Handle parse error
+}
+
+// Only allow http and https schemes
+if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+    // Reject redirect
+}
+```
+
+**Impact:** Prevents attackers from creating malicious shortened URLs that redirect to:
+- `javascript:` URLs (XSS)
+- `file://` URLs (local file access)
+- `ftp://` or other protocols
+- Data URIs containing malicious content
+
+#### 2. Cryptographic Random Generation Fix
+**File:** `internal/lib/api/random/random.go`
+
+Replaced predictable `math/rand` with cryptographically secure `crypto/rand`:
+```go
+// Before: Predictable
+rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+b[i] = chars[rnd.Intn(len(chars))]
+
+// After: Cryptographically secure
+num, err := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
+b[i] = chars[num.Int64()]
+```
+
+**Impact:** 
+- Aliases are now unpredictable and resistant to enumeration attacks
+- Prevents collision attacks
+- Eliminates risk of alias squatting through prediction
+
+#### 3. Secure gRPC Configuration
+**File:** `internal/client/grpc/grpc.go`
+
+Added configurable TLS support:
+```go
+var transportCreds credentials.TransportCredentials
+if insecure {
+    log.Warn("Using insecure gRPC connection - not recommended for production")
+    transportCreds = grpcinsecure.NewCredentials()
+} else {
+    transportCreds = credentials.NewTLS(&tls.Config{
+        MinVersion: tls.VersionTLS12,
+    })
+}
+```
+
+**Configuration:** Changed default from `insecure: true` to `insecure: false`
+
+**Impact:**
+- TLS encryption prevents man-in-the-middle attacks
+- Credentials cannot be intercepted in transit
+- Server authentication enabled
+
+#### 4. Database Connection Pool Configuration
+**File:** `internal/storage/sqlite/sqlite.go`
+
+Added SQLite pragmas and connection pool settings:
+```go
+dsn := storagePath + "?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL&_foreign_keys=ON"
+db.SetMaxOpenConns(25)
+db.SetMaxIdleConns(5)
+db.SetConnMaxLifetime(5 * time.Minute)
+```
+
+**Impact:**
+- Better concurrency with WAL mode
+- Prevents resource exhaustion with connection limits
+- Improved reliability with busy timeout
+- Better performance with optimized synchronous mode
+
+---
