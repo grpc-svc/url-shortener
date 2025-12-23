@@ -10,6 +10,7 @@ import (
 	"url-shortener/internal/lib/api/random"
 	resp "url-shortener/internal/lib/api/response"
 	"url-shortener/internal/lib/api/urlvalidator"
+	"url-shortener/internal/lib/metrics"
 	"url-shortener/internal/storage"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -138,6 +139,8 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		}
 
 		log.Info("url saved successfully", slog.String("alias", alias), slog.String("original_url", req.OriginalURL))
+
+		metrics.URLsCreatedTotal.Inc()
 
 		err = resp.RenderJSON(w, http.StatusOK, Response{
 			Response: resp.OK(),

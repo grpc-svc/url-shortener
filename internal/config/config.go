@@ -15,6 +15,7 @@ type Config struct {
 	Migrations  MigrationsConfig `yaml:"migrations"`
 	Clients     ClientsConfig    `yaml:"clients"`
 	AppSecret   string           `yaml:"app_secret" env-required:"true"`
+	Metrics     MetricsConfig    `yaml:"metrics"`
 }
 
 type HTTPServerConfig struct {
@@ -38,6 +39,11 @@ type ClientsConfig struct {
 type MigrationsConfig struct {
 	MigrationsPath string `yaml:"migrations_path" env-default:"./migrations"`
 	MigrationTable string `yaml:"migration_table" env-default:"migrations"`
+}
+
+type MetricsConfig struct {
+	Enabled bool   `yaml:"enabled" env-default:"false"`
+	Address string `yaml:"address" env-default:":9090"`
 }
 
 func MustLoad() *Config {

@@ -14,13 +14,16 @@ import (
 	"url-shortener/internal/http-server/handlers/url/save"
 	mwAuth "url-shortener/internal/http-server/middleware/auth"
 	mwLogger "url-shortener/internal/http-server/middleware/logger"
+	mwMetrics "url-shortener/internal/http-server/middleware/metrics"
 	"url-shortener/internal/lib/jwt"
 	"url-shortener/internal/lib/logger/slogcute"
 	"url-shortener/internal/storage"
+	"url-shortener/internal/storage/instrumented"
 	"url-shortener/internal/storage/sqlite"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -50,16 +53,20 @@ func main() {
 	}
 
 	// Initialize storage
-	var storageInstance storage.Storage
-	storageInstance, err = sqlite.New(cfg.StoragePath)
+	var sqliteStorage storage.Storage
+	sqliteStorage, err = sqlite.New(cfg.StoragePath)
 	if err != nil {
 		log.Error("Failed to initialize storage", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
 
+	// Wrap storage with metrics instrumentation
+	var storageInstance storage.Storage = instrumented.New(sqliteStorage)
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
+	router.Use(mwMetrics.New())
 	router.Use(mwLogger.New(log))
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
@@ -80,6 +87,22 @@ func main() {
 
 	// Public routes
 	router.Get("/{alias}", redirect.New(log, storageInstance))
+
+	// Start metrics server if enabled
+	if cfg.Metrics.Enabled {
+		go func() {
+			metricsRouter := chi.NewRouter()
+			metricsRouter.Handle("/metrics", promhttp.Handler())
+			metricsSrv := &http.Server{
+				Addr:    cfg.Metrics.Address,
+				Handler: metricsRouter,
+			}
+			log.Info("starting metrics server", slog.String("addr", cfg.Metrics.Address))
+			if err = metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Error("metrics server failed", slog.String("error", err.Error()))
+			}
+		}()
+	}
 
 	log.Info("starting HTTP server", slog.String("addr", cfg.HTTPServer.Address))
 

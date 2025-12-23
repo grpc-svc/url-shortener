@@ -7,6 +7,7 @@ import (
 	"net/http"
 	resp "url-shortener/internal/lib/api/response"
 	"url-shortener/internal/lib/api/urlvalidator"
+	"url-shortener/internal/lib/metrics"
 	"url-shortener/internal/storage"
 
 	"github.com/go-chi/chi/v5"
@@ -69,5 +70,7 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 
 		http.Redirect(w, r, originalURL, http.StatusFound)
 		log.Info("redirected", slog.String("alias", alias), slog.String("original_url", originalURL))
+
+		metrics.RedirectsTotal.Inc()
 	}
 }
