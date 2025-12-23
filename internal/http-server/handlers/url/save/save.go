@@ -9,6 +9,7 @@ import (
 	"url-shortener/internal/http-server/middleware/auth"
 	"url-shortener/internal/lib/api/random"
 	resp "url-shortener/internal/lib/api/response"
+	"url-shortener/internal/lib/api/urlvalidator"
 	"url-shortener/internal/storage"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -77,9 +78,31 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 			return
 		}
 
+		// Validate URL to prevent open redirect vulnerability
+		if err = urlvalidator.ValidateURL(req.OriginalURL); err != nil {
+			if errors.Is(err, urlvalidator.ErrInvalidURL) {
+				log.Error("invalid URL format", slog.String("url", req.OriginalURL), slog.String("error", err.Error()))
+			} else if errors.Is(err, urlvalidator.ErrInvalidScheme) {
+				log.Warn("blocked non-http(s) URL", slog.String("url", req.OriginalURL), slog.String("error", err.Error()))
+			}
+			err = resp.RenderJSON(w, http.StatusBadRequest, resp.Error("invalid URL"))
+			if err != nil {
+				log.Error("failed to render JSON response", slog.String("error", err.Error()))
+			}
+			return
+		}
+
 		alias := req.Alias
 		if alias == "" {
-			alias = random.NewRandomString(AliasLength)
+			alias, err = random.NewRandomString(AliasLength)
+			if err != nil {
+				log.Error("failed to generate random alias", slog.String("error", err.Error()))
+				err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("failed to generate alias"))
+				if err != nil {
+					log.Error("failed to render JSON response", slog.String("error", err.Error()))
+				}
+				return
+			}
 		}
 
 		ownerEmail, ok := auth.GetEmail(r.Context())
