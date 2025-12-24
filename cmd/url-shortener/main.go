@@ -64,7 +64,7 @@ func main() {
 	// Wrap storage with metrics instrumentation
 	var storageInstance storage.Storage = instrumented.New(sqliteStorage)
 
-	urlShortenerService := url.New(log, storageInstance)
+	urlShortenerService := url.New(log, storageInstance, ssoClient)
 
 	router := chi.NewRouter()
 
@@ -85,7 +85,7 @@ func main() {
 		r.Use(mwAuth.New(log, jwtValidator))
 
 		r.Post("/url", save.New(log, urlShortenerService))
-		r.Delete("/{alias}", delete.New(log, storageInstance, ssoClient))
+		r.Delete("/{alias}", delete.New(log, urlShortenerService))
 	})
 
 	// Public routes
