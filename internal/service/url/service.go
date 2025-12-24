@@ -10,6 +10,7 @@ type Provider interface {
 	SaveURL(ctx context.Context, alias, originalURL, ownerEmail string) error
 	UrlOwner(ctx context.Context, alias string) (string, error)
 	DeleteURL(ctx context.Context, alias string) error
+	Url(ctx context.Context, alias string) (string, error)
 }
 
 type AdminChecker interface {

@@ -89,7 +89,7 @@ func main() {
 	})
 
 	// Public routes
-	router.Get("/{alias}", redirect.New(log, storageInstance))
+	router.Get("/{alias}", redirect.New(log, urlShortenerService))
 
 	// Start metrics server if enabled
 	if cfg.Metrics.Enabled {
