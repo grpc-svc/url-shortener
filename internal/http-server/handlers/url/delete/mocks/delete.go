@@ -37,36 +37,38 @@ func (_m *MockURLDeleter) EXPECT() *MockURLDeleter_Expecter {
 	return &MockURLDeleter_Expecter{mock: &_m.Mock}
 }
 
-// DeleteURL provides a mock function for the type MockURLDeleter
-func (_mock *MockURLDeleter) DeleteURL(ctx context.Context, alias string) error {
-	ret := _mock.Called(ctx, alias)
+// Delete provides a mock function for the type MockURLDeleter
+func (_mock *MockURLDeleter) Delete(ctx context.Context, alias string, requesterEmail string, requesterID int64) error {
+	ret := _mock.Called(ctx, alias, requesterEmail, requesterID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteURL")
+		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, alias)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, int64) error); ok {
+		r0 = returnFunc(ctx, alias, requesterEmail, requesterID)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockURLDeleter_DeleteURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteURL'
-type MockURLDeleter_DeleteURL_Call struct {
+// MockURLDeleter_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockURLDeleter_Delete_Call struct {
 	*mock.Call
 }
 
-// DeleteURL is a helper method to define mock.On call
+// Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - alias string
-func (_e *MockURLDeleter_Expecter) DeleteURL(ctx interface{}, alias interface{}) *MockURLDeleter_DeleteURL_Call {
-	return &MockURLDeleter_DeleteURL_Call{Call: _e.mock.On("DeleteURL", ctx, alias)}
+//   - requesterEmail string
+//   - requesterID int64
+func (_e *MockURLDeleter_Expecter) Delete(ctx interface{}, alias interface{}, requesterEmail interface{}, requesterID interface{}) *MockURLDeleter_Delete_Call {
+	return &MockURLDeleter_Delete_Call{Call: _e.mock.On("Delete", ctx, alias, requesterEmail, requesterID)}
 }
 
-func (_c *MockURLDeleter_DeleteURL_Call) Run(run func(ctx context.Context, alias string)) *MockURLDeleter_DeleteURL_Call {
+func (_c *MockURLDeleter_Delete_Call) Run(run func(ctx context.Context, alias string, requesterEmail string, requesterID int64)) *MockURLDeleter_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -76,179 +78,30 @@ func (_c *MockURLDeleter_DeleteURL_Call) Run(run func(ctx context.Context, alias
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 int64
+		if args[3] != nil {
+			arg3 = args[3].(int64)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *MockURLDeleter_DeleteURL_Call) Return(err error) *MockURLDeleter_DeleteURL_Call {
+func (_c *MockURLDeleter_Delete_Call) Return(err error) *MockURLDeleter_Delete_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockURLDeleter_DeleteURL_Call) RunAndReturn(run func(ctx context.Context, alias string) error) *MockURLDeleter_DeleteURL_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetURLOwner provides a mock function for the type MockURLDeleter
-func (_mock *MockURLDeleter) GetURLOwner(ctx context.Context, alias string) (string, error) {
-	ret := _mock.Called(ctx, alias)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetURLOwner")
-	}
-
-	var r0 string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return returnFunc(ctx, alias)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = returnFunc(ctx, alias)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, alias)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockURLDeleter_GetURLOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetURLOwner'
-type MockURLDeleter_GetURLOwner_Call struct {
-	*mock.Call
-}
-
-// GetURLOwner is a helper method to define mock.On call
-//   - ctx context.Context
-//   - alias string
-func (_e *MockURLDeleter_Expecter) GetURLOwner(ctx interface{}, alias interface{}) *MockURLDeleter_GetURLOwner_Call {
-	return &MockURLDeleter_GetURLOwner_Call{Call: _e.mock.On("GetURLOwner", ctx, alias)}
-}
-
-func (_c *MockURLDeleter_GetURLOwner_Call) Run(run func(ctx context.Context, alias string)) *MockURLDeleter_GetURLOwner_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockURLDeleter_GetURLOwner_Call) Return(s string, err error) *MockURLDeleter_GetURLOwner_Call {
-	_c.Call.Return(s, err)
-	return _c
-}
-
-func (_c *MockURLDeleter_GetURLOwner_Call) RunAndReturn(run func(ctx context.Context, alias string) (string, error)) *MockURLDeleter_GetURLOwner_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// NewMockAdminChecker creates a new instance of MockAdminChecker. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-// The first argument is typically a *testing.T value.
-func NewMockAdminChecker(t interface {
-	mock.TestingT
-	Cleanup(func())
-}) *MockAdminChecker {
-	mock := &MockAdminChecker{}
-	mock.Mock.Test(t)
-
-	t.Cleanup(func() { mock.AssertExpectations(t) })
-
-	return mock
-}
-
-// MockAdminChecker is an autogenerated mock type for the AdminChecker type
-type MockAdminChecker struct {
-	mock.Mock
-}
-
-type MockAdminChecker_Expecter struct {
-	mock *mock.Mock
-}
-
-func (_m *MockAdminChecker) EXPECT() *MockAdminChecker_Expecter {
-	return &MockAdminChecker_Expecter{mock: &_m.Mock}
-}
-
-// IsAdmin provides a mock function for the type MockAdminChecker
-func (_mock *MockAdminChecker) IsAdmin(ctx context.Context, userID int64) (bool, error) {
-	ret := _mock.Called(ctx, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IsAdmin")
-	}
-
-	var r0 bool
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (bool, error)); ok {
-		return returnFunc(ctx, userID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) bool); ok {
-		r0 = returnFunc(ctx, userID)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = returnFunc(ctx, userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAdminChecker_IsAdmin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsAdmin'
-type MockAdminChecker_IsAdmin_Call struct {
-	*mock.Call
-}
-
-// IsAdmin is a helper method to define mock.On call
-//   - ctx context.Context
-//   - userID int64
-func (_e *MockAdminChecker_Expecter) IsAdmin(ctx interface{}, userID interface{}) *MockAdminChecker_IsAdmin_Call {
-	return &MockAdminChecker_IsAdmin_Call{Call: _e.mock.On("IsAdmin", ctx, userID)}
-}
-
-func (_c *MockAdminChecker_IsAdmin_Call) Run(run func(ctx context.Context, userID int64)) *MockAdminChecker_IsAdmin_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 int64
-		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAdminChecker_IsAdmin_Call) Return(b bool, err error) *MockAdminChecker_IsAdmin_Call {
-	_c.Call.Return(b, err)
-	return _c
-}
-
-func (_c *MockAdminChecker_IsAdmin_Call) RunAndReturn(run func(ctx context.Context, userID int64) (bool, error)) *MockAdminChecker_IsAdmin_Call {
+func (_c *MockURLDeleter_Delete_Call) RunAndReturn(run func(ctx context.Context, alias string, requesterEmail string, requesterID int64) error) *MockURLDeleter_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }

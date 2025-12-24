@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	domain "url-shortener/internal/domain/url"
 	"url-shortener/internal/http-server/handlers/url/save"
 	"url-shortener/internal/http-server/handlers/url/save/mocks"
 	"url-shortener/internal/http-server/middleware/auth"
@@ -22,60 +23,62 @@ import (
 
 func TestSaveHandler(t *testing.T) {
 	cases := []struct {
-		name       string
-		alias      string
-		url        string
-		ownerEmail string
-		respError  string
-		mockError  error
-		statusCode int
+		name           string
+		alias          string
+		url            string
+		ownerEmail     string
+		respError      string
+		mockError      error
+		mockAlias      string
+		statusCode     int
+		shouldCallMock bool
 	}{
 		{
-			name:       "Success",
-			alias:      "test_alias",
-			url:        "https://google.com",
-			ownerEmail: "test@example.com",
-			statusCode: http.StatusOK,
+			name:           "Success",
+			alias:          "test_alias",
+			url:            "https://google.com",
+			ownerEmail:     "test@example.com",
+			mockAlias:      "test_alias",
+			statusCode:     http.StatusOK,
+			shouldCallMock: true,
 		},
 		{
-			name:       "Empty alias",
-			alias:      "",
-			url:        "https://google.com",
-			ownerEmail: "test@example.com",
-			statusCode: http.StatusOK,
+			name:           "Empty alias",
+			alias:          "",
+			url:            "https://google.com",
+			ownerEmail:     "test@example.com",
+			mockAlias:      "randomAlias",
+			statusCode:     http.StatusOK,
+			shouldCallMock: true,
 		},
 		{
-			name:       "Empty URL",
-			url:        "",
-			alias:      "some_alias",
-			ownerEmail: "test@example.com",
-			respError:  "field OriginalURL is a required field",
-			statusCode: http.StatusBadRequest,
+			name:           "Empty URL",
+			url:            "",
+			alias:          "some_alias",
+			ownerEmail:     "test@example.com",
+			respError:      "invalid URL",
+			mockError:      fmt.Errorf("url.Service.Shorten: %w", domain.ErrInvalidURL),
+			statusCode:     http.StatusBadRequest,
+			shouldCallMock: true,
 		},
 		{
-			name:       "Invalid URL",
-			url:        "some invalid URL",
-			alias:      "some_alias",
-			ownerEmail: "test@example.com",
-			respError:  "field OriginalURL is not a valid URL",
-			statusCode: http.StatusBadRequest,
+			name:           "Shorten Error",
+			alias:          "test_alias",
+			url:            "https://google.com",
+			ownerEmail:     "test@example.com",
+			respError:      "internal error",
+			mockError:      errors.New("unexpected error"),
+			statusCode:     http.StatusInternalServerError,
+			shouldCallMock: true,
 		},
 		{
-			name:       "SaveURL Error",
-			alias:      "test_alias",
-			url:        "https://google.com",
-			ownerEmail: "test@example.com",
-			respError:  "failed to save url",
-			mockError:  errors.New("unexpected error"),
-			statusCode: http.StatusInternalServerError,
-		},
-		{
-			name:       "Missing owner email in context",
-			alias:      "test_alias",
-			url:        "https://google.com",
-			ownerEmail: "", // Empty email means we won't add it to context
-			respError:  "failed to get owner email",
-			statusCode: http.StatusInternalServerError,
+			name:           "Missing owner email in context",
+			alias:          "test_alias",
+			url:            "https://google.com",
+			ownerEmail:     "", // Empty email means we won't add it to context
+			respError:      "failed to get owner email",
+			statusCode:     http.StatusInternalServerError,
+			shouldCallMock: false,
 		},
 	}
 
@@ -83,11 +86,11 @@ func TestSaveHandler(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			urlSaverMock := mocks.NewMockURLSaver(t)
+			urlSaverMock := mocks.NewMockURLShortener(t)
 
-			if tc.respError == "" || tc.mockError != nil {
-				urlSaverMock.On("SaveURL", mock.Anything, mock.AnythingOfType("string"), tc.url, tc.ownerEmail).
-					Return(tc.mockError).
+			if tc.shouldCallMock {
+				urlSaverMock.On("Shorten", mock.Anything, tc.url, tc.alias, tc.ownerEmail).
+					Return(tc.mockAlias, tc.mockError).
 					Once()
 			}
 

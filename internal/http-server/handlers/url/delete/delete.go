@@ -5,9 +5,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	domain "url-shortener/internal/domain/url"
 	"url-shortener/internal/http-server/middleware/auth"
 	resp "url-shortener/internal/lib/api/response"
-	"url-shortener/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,20 +15,10 @@ import (
 
 //go:generate go run github.com/vektra/mockery/v3
 type URLDeleter interface {
-	DeleteURL(ctx context.Context, alias string) error
-	GetURLOwner(ctx context.Context, alias string) (string, error)
+	Delete(ctx context.Context, alias, requesterEmail string, requesterID int64) error
 }
 
-// AdminChecker checks if a user has admin privileges.
-type AdminChecker interface {
-	IsAdmin(ctx context.Context, userID int64) (bool, error)
-}
-
-func New(
-	log *slog.Logger,
-	urlDeleter URLDeleter,
-	adminChecker AdminChecker,
-) http.HandlerFunc {
+func New(log *slog.Logger, urlDeleter URLDeleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "http-server.handlers.url.delete.New"
 
@@ -71,55 +61,27 @@ func New(
 
 		log = log.With(slog.String("alias", alias), slog.String("user_email", userEmail))
 
-		// Check URL ownership
-		ownerEmail, err := urlDeleter.GetURLOwner(r.Context(), alias)
-		if errors.Is(err, storage.ErrURLNotFound) {
-			log.Info("alias not found for deletion", slog.String("alias", alias))
-			err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("alias not found"))
-			if err != nil {
-				log.Error("failed to render JSON response", slog.String("error", err.Error()))
-			}
-			return
-		}
+		err := urlDeleter.Delete(r.Context(), alias, userEmail, userID)
+
 		if err != nil {
-			log.Error("failed to get URL owner", slog.String("error", err.Error()))
-			err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("internal error"))
-			if err != nil {
-				log.Error("failed to render JSON response", slog.String("error", err.Error()))
+			if errors.Is(err, domain.ErrURLNotFound) {
+				log.Info("url not found", slog.String("alias", alias))
+				err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("not found"))
+				if err != nil {
+					log.Error("failed to render JSON response", slog.String("error", err.Error()))
+				}
+				return
 			}
-			return
-		}
-
-		// Allow deletion if user is owner OR admin
-		if ownerEmail != userEmail {
-			// Check if user is admin
-			isAdmin, err := adminChecker.IsAdmin(r.Context(), userID)
-			if err != nil {
-				log.Error("failed to check admin status", slog.String("error", err.Error()))
-				err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("internal error"))
+			if errors.Is(err, domain.ErrPermissionDenied) {
+				log.Info("permission denied", slog.String("alias", alias), slog.String("user", userEmail))
+				err = resp.RenderJSON(w, http.StatusForbidden, resp.Error("permission denied"))
 				if err != nil {
 					log.Error("failed to render JSON response", slog.String("error", err.Error()))
 				}
 				return
 			}
 
-			if !isAdmin {
-				log.Info("user is not the owner and not an admin",
-					slog.String("owner_email", ownerEmail),
-				)
-				err = resp.RenderJSON(w, http.StatusForbidden, resp.Error("you do not have permission to delete this URL"))
-				if err != nil {
-					log.Error("failed to render JSON response", slog.String("error", err.Error()))
-				}
-				return
-			}
-
-			log.Info("admin deleting URL", slog.String("owner_email", ownerEmail))
-		}
-
-		// Delete URL
-		if err = urlDeleter.DeleteURL(r.Context(), alias); err != nil {
-			log.Error("failed to delete URL", slog.String("error", err.Error()))
+			log.Error("failed to delete url", slog.String("error", err.Error()))
 			err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("internal error"))
 			if err != nil {
 				log.Error("failed to render JSON response", slog.String("error", err.Error()))

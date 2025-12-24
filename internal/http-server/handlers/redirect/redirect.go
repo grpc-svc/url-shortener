@@ -5,17 +5,16 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	domain "url-shortener/internal/domain/url"
 	resp "url-shortener/internal/lib/api/response"
-	"url-shortener/internal/lib/api/urlvalidator"
 	"url-shortener/internal/lib/metrics"
-	"url-shortener/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 type URLGetter interface {
-	GetURL(ctx context.Context, alias string) (string, error)
+	RedirectURL(ctx context.Context, alias string) (string, error)
 }
 
 func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
@@ -36,32 +35,29 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 			return
 		}
 
-		originalURL, err := urlGetter.GetURL(r.Context(), alias)
-		if errors.Is(err, storage.ErrURLNotFound) {
-			log.Info("alias not found", slog.String("alias", alias))
-			err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("alias not found"))
-			if err != nil {
-				log.Error("failed to render JSON response", slog.String("error", err.Error()))
-			}
-			return
-		}
-		if err != nil {
-			log.Error("failed to get original URL", slog.String("error", err.Error()))
-			err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("internal error"))
-			if err != nil {
-				log.Error("failed to render JSON response", slog.String("error", err.Error()))
-			}
-			return
-		}
+		originalURL, err := urlGetter.RedirectURL(r.Context(), alias)
 
-		// Validate URL before redirect to prevent open redirect vulnerability
-		if err = urlvalidator.ValidateURL(originalURL); err != nil {
-			if errors.Is(err, urlvalidator.ErrInvalidURL) {
-				log.Error("invalid URL in database", slog.String("alias", alias), slog.String("url", originalURL))
-			} else if errors.Is(err, urlvalidator.ErrInvalidScheme) {
-				log.Warn("blocked redirect to non-http(s) URL", slog.String("alias", alias), slog.String("url", originalURL))
+		if err != nil {
+			if errors.Is(err, domain.ErrURLNotFound) {
+				log.Info("alias not found", slog.String("alias", alias))
+				err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("not found"))
+				if err != nil {
+					log.Error("failed to render JSON response", slog.String("error", err.Error()))
+				}
+				return
 			}
-			err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("unable to redirect"))
+
+			if errors.Is(err, domain.ErrInvalidURL) || errors.Is(err, domain.ErrInvalidScheme) {
+				log.Error("invalid url in storage", slog.String("alias", alias), slog.String("error", err.Error()))
+				err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("internal error: invalid url stored"))
+				if err != nil {
+					log.Error("failed to render JSON response", slog.String("error", err.Error()))
+				}
+				return
+			}
+
+			log.Error("failed to get url", slog.String("error", err.Error()))
+			err = resp.RenderJSON(w, http.StatusInternalServerError, resp.Error("internal error"))
 			if err != nil {
 				log.Error("failed to render JSON response", slog.String("error", err.Error()))
 			}

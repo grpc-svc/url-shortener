@@ -22,17 +22,17 @@ func (s *Storage) SaveURL(ctx context.Context, alias, originalURL, ownerEmail st
 	s.recordMetrics(op, err, start)
 	return err
 }
-func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
-	const op = "GetURL"
+func (s *Storage) Url(ctx context.Context, alias string) (string, error) {
+	const op = "Url"
 	start := time.Now()
-	url, err := s.next.GetURL(ctx, alias)
+	url, err := s.next.Url(ctx, alias)
 	s.recordMetrics(op, err, start)
 	return url, err
 }
-func (s *Storage) GetURLOwner(ctx context.Context, alias string) (string, error) {
-	const op = "GetURLOwner"
+func (s *Storage) UrlOwner(ctx context.Context, alias string) (string, error) {
+	const op = "UrlOwner"
 	start := time.Now()
-	owner, err := s.next.GetURLOwner(ctx, alias)
+	owner, err := s.next.UrlOwner(ctx, alias)
 	s.recordMetrics(op, err, start)
 	return owner, err
 }
