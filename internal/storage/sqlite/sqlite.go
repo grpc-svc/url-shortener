@@ -75,9 +75,9 @@ func (s *Storage) SaveURL(ctx context.Context, alias, originalURL, ownerEmail st
 	return nil
 }
 
-// GetURL retrieves the original URL for the given alias.
-func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
-	const op = "storage.sqlite.GetURL"
+// Url retrieves the original URL for the given alias.
+func (s *Storage) Url(ctx context.Context, alias string) (string, error) {
+	const op = "storage.sqlite.Url"
 
 	stmt, err := s.db.PrepareContext(ctx, "SELECT url FROM urls WHERE alias = ?")
 	if err != nil {
@@ -99,9 +99,9 @@ func (s *Storage) GetURL(ctx context.Context, alias string) (string, error) {
 	return originalURL, nil
 }
 
-// GetURLOwner retrieves the owner email for the given alias.
-func (s *Storage) GetURLOwner(ctx context.Context, alias string) (string, error) {
-	const op = "storage.sqlite.GetURLOwner"
+// UrlOwner retrieves the owner email for the given alias.
+func (s *Storage) UrlOwner(ctx context.Context, alias string) (string, error) {
+	const op = "storage.sqlite.UrlOwner"
 
 	stmt, err := s.db.PrepareContext(ctx, "SELECT owner_email FROM urls WHERE alias = ?")
 	if err != nil {

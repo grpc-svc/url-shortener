@@ -94,12 +94,12 @@ func (_c *MockURLDeleter_DeleteURL_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
-// GetURLOwner provides a mock function for the type MockURLDeleter
-func (_mock *MockURLDeleter) GetURLOwner(ctx context.Context, alias string) (string, error) {
+// UrlOwner provides a mock function for the type MockURLDeleter
+func (_mock *MockURLDeleter) UrlOwner(ctx context.Context, alias string) (string, error) {
 	ret := _mock.Called(ctx, alias)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetURLOwner")
+		panic("no return value specified for UrlOwner")
 	}
 
 	var r0 string
@@ -120,19 +120,19 @@ func (_mock *MockURLDeleter) GetURLOwner(ctx context.Context, alias string) (str
 	return r0, r1
 }
 
-// MockURLDeleter_GetURLOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetURLOwner'
-type MockURLDeleter_GetURLOwner_Call struct {
+// MockURLDeleter_UrlOwner_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UrlOwner'
+type MockURLDeleter_UrlOwner_Call struct {
 	*mock.Call
 }
 
-// GetURLOwner is a helper method to define mock.On call
+// UrlOwner is a helper method to define mock.On call
 //   - ctx context.Context
 //   - alias string
-func (_e *MockURLDeleter_Expecter) GetURLOwner(ctx interface{}, alias interface{}) *MockURLDeleter_GetURLOwner_Call {
-	return &MockURLDeleter_GetURLOwner_Call{Call: _e.mock.On("GetURLOwner", ctx, alias)}
+func (_e *MockURLDeleter_Expecter) UrlOwner(ctx interface{}, alias interface{}) *MockURLDeleter_UrlOwner_Call {
+	return &MockURLDeleter_UrlOwner_Call{Call: _e.mock.On("UrlOwner", ctx, alias)}
 }
 
-func (_c *MockURLDeleter_GetURLOwner_Call) Run(run func(ctx context.Context, alias string)) *MockURLDeleter_GetURLOwner_Call {
+func (_c *MockURLDeleter_UrlOwner_Call) Run(run func(ctx context.Context, alias string)) *MockURLDeleter_UrlOwner_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -150,12 +150,12 @@ func (_c *MockURLDeleter_GetURLOwner_Call) Run(run func(ctx context.Context, ali
 	return _c
 }
 
-func (_c *MockURLDeleter_GetURLOwner_Call) Return(s string, err error) *MockURLDeleter_GetURLOwner_Call {
+func (_c *MockURLDeleter_UrlOwner_Call) Return(s string, err error) *MockURLDeleter_UrlOwner_Call {
 	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *MockURLDeleter_GetURLOwner_Call) RunAndReturn(run func(ctx context.Context, alias string) (string, error)) *MockURLDeleter_GetURLOwner_Call {
+func (_c *MockURLDeleter_UrlOwner_Call) RunAndReturn(run func(ctx context.Context, alias string) (string, error)) *MockURLDeleter_UrlOwner_Call {
 	_c.Call.Return(run)
 	return _c
 }

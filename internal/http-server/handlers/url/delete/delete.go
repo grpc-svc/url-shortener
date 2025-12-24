@@ -16,7 +16,7 @@ import (
 //go:generate go run github.com/vektra/mockery/v3
 type URLDeleter interface {
 	DeleteURL(ctx context.Context, alias string) error
-	GetURLOwner(ctx context.Context, alias string) (string, error)
+	UrlOwner(ctx context.Context, alias string) (string, error)
 }
 
 // AdminChecker checks if a user has admin privileges.
@@ -72,7 +72,7 @@ func New(
 		log = log.With(slog.String("alias", alias), slog.String("user_email", userEmail))
 
 		// Check URL ownership
-		ownerEmail, err := urlDeleter.GetURLOwner(r.Context(), alias)
+		ownerEmail, err := urlDeleter.UrlOwner(r.Context(), alias)
 		if errors.Is(err, storage.ErrURLNotFound) {
 			log.Info("alias not found for deletion", slog.String("alias", alias))
 			err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("alias not found"))

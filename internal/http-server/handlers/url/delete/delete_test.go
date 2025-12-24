@@ -38,7 +38,7 @@ func TestDeleteHandler(t *testing.T) {
 			userEmail:  "owner@example.com",
 			userID:     123,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "test_alias").
+				urlDeleter.On("UrlOwner", mock.Anything, "test_alias").
 					Return("owner@example.com", nil).Once()
 				urlDeleter.On("DeleteURL", mock.Anything, "test_alias").
 					Return(nil).Once()
@@ -52,7 +52,7 @@ func TestDeleteHandler(t *testing.T) {
 			userEmail:  "admin@example.com",
 			userID:     456,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "test_alias").
+				urlDeleter.On("UrlOwner", mock.Anything, "test_alias").
 					Return("owner@example.com", nil).Once()
 				adminChecker.On("IsAdmin", mock.Anything, int64(456)).
 					Return(true, nil).Once()
@@ -68,7 +68,7 @@ func TestDeleteHandler(t *testing.T) {
 			userEmail:  "user@example.com",
 			userID:     123,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "nonexistent").
+				urlDeleter.On("UrlOwner", mock.Anything, "nonexistent").
 					Return("", storage.ErrURLNotFound).Once()
 			},
 			statusCode: http.StatusNotFound,
@@ -80,7 +80,7 @@ func TestDeleteHandler(t *testing.T) {
 			userEmail:  "other@example.com",
 			userID:     789,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "test_alias").
+				urlDeleter.On("UrlOwner", mock.Anything, "test_alias").
 					Return("owner@example.com", nil).Once()
 				adminChecker.On("IsAdmin", mock.Anything, int64(789)).
 					Return(false, nil).Once()
@@ -88,13 +88,13 @@ func TestDeleteHandler(t *testing.T) {
 			statusCode: http.StatusForbidden,
 		},
 		{
-			name:       "Error - GetURLOwner fails with internal error",
+			name:       "Error - UrlOwner fails with internal error",
 			alias:      "test_alias",
 			ownerEmail: "",
 			userEmail:  "user@example.com",
 			userID:     123,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "test_alias").
+				urlDeleter.On("UrlOwner", mock.Anything, "test_alias").
 					Return("", errors.New("database error")).Once()
 			},
 			statusCode: http.StatusInternalServerError,
@@ -106,7 +106,7 @@ func TestDeleteHandler(t *testing.T) {
 			userEmail:  "other@example.com",
 			userID:     789,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "test_alias").
+				urlDeleter.On("UrlOwner", mock.Anything, "test_alias").
 					Return("owner@example.com", nil).Once()
 				adminChecker.On("IsAdmin", mock.Anything, int64(789)).
 					Return(false, errors.New("sso service error")).Once()
@@ -120,7 +120,7 @@ func TestDeleteHandler(t *testing.T) {
 			userEmail:  "owner@example.com",
 			userID:     123,
 			setupMocks: func(urlDeleter *mocks.MockURLDeleter, adminChecker *mocks.MockAdminChecker) {
-				urlDeleter.On("GetURLOwner", mock.Anything, "test_alias").
+				urlDeleter.On("UrlOwner", mock.Anything, "test_alias").
 					Return("owner@example.com", nil).Once()
 				urlDeleter.On("DeleteURL", mock.Anything, "test_alias").
 					Return(errors.New("database error")).Once()
@@ -160,7 +160,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			// t.Parallel()
 
 			urlDeleterMock := mocks.NewMockURLDeleter(t)
 			adminCheckerMock := mocks.NewMockAdminChecker(t)

@@ -13,8 +13,8 @@ var (
 // Storage defines the interface for URL storage operations.
 type Storage interface {
 	SaveURL(ctx context.Context, alias, originalURL, ownerEmail string) error
-	GetURL(ctx context.Context, alias string) (string, error)
-	GetURLOwner(ctx context.Context, alias string) (string, error)
+	Url(ctx context.Context, alias string) (string, error)
+	UrlOwner(ctx context.Context, alias string) (string, error)
 	DeleteURL(ctx context.Context, alias string) error
 	Close() error
 }

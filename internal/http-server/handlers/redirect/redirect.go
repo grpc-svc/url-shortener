@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	domain "url-shortener/internal/domain/url"
 	resp "url-shortener/internal/lib/api/response"
-	"url-shortener/internal/lib/api/urlvalidator"
 	"url-shortener/internal/lib/metrics"
 	"url-shortener/internal/storage"
 
@@ -15,7 +15,7 @@ import (
 )
 
 type URLGetter interface {
-	GetURL(ctx context.Context, alias string) (string, error)
+	Url(ctx context.Context, alias string) (string, error)
 }
 
 func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
@@ -36,7 +36,7 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 			return
 		}
 
-		originalURL, err := urlGetter.GetURL(r.Context(), alias)
+		originalURL, err := urlGetter.Url(r.Context(), alias)
 		if errors.Is(err, storage.ErrURLNotFound) {
 			log.Info("alias not found", slog.String("alias", alias))
 			err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("alias not found"))
@@ -55,10 +55,10 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 		}
 
 		// Validate URL before redirect to prevent open redirect vulnerability
-		if err = urlvalidator.ValidateURL(originalURL); err != nil {
-			if errors.Is(err, urlvalidator.ErrInvalidURL) {
+		if err = domain.ValidateURL(originalURL); err != nil {
+			if errors.Is(err, domain.ErrInvalidURL) {
 				log.Error("invalid URL in database", slog.String("alias", alias), slog.String("url", originalURL))
-			} else if errors.Is(err, urlvalidator.ErrInvalidScheme) {
+			} else if errors.Is(err, domain.ErrInvalidScheme) {
 				log.Warn("blocked redirect to non-http(s) URL", slog.String("alias", alias), slog.String("url", originalURL))
 			}
 			err = resp.RenderJSON(w, http.StatusNotFound, resp.Error("unable to redirect"))

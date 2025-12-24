@@ -17,6 +17,7 @@ import (
 	mwMetrics "url-shortener/internal/http-server/middleware/metrics"
 	"url-shortener/internal/lib/jwt"
 	"url-shortener/internal/lib/logger/slogcute"
+	"url-shortener/internal/service/url"
 	"url-shortener/internal/storage"
 	"url-shortener/internal/storage/instrumented"
 	"url-shortener/internal/storage/sqlite"
@@ -63,6 +64,8 @@ func main() {
 	// Wrap storage with metrics instrumentation
 	var storageInstance storage.Storage = instrumented.New(sqliteStorage)
 
+	urlShortenerService := url.New(log, storageInstance)
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -81,7 +84,7 @@ func main() {
 	router.Group(func(r chi.Router) {
 		r.Use(mwAuth.New(log, jwtValidator))
 
-		r.Post("/url", save.New(log, storageInstance))
+		r.Post("/url", save.New(log, urlShortenerService))
 		r.Delete("/{alias}", delete.New(log, storageInstance, ssoClient))
 	})
 
