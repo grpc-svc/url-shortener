@@ -35,7 +35,6 @@ vendor/
 *.db
 *.sqlite
 *.sqlite3
-storage/
 
 # Local configuration (keep templates/examples)
 config/local.yaml
